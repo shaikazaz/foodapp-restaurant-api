@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bawarchi Desk — Order Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board: #1E1B18;
+    --board-soft: #2A2521;
+    --paper: #F6F1E7;
+    --gold: #D4A24C;
+    --gold-deep: #B8842E;
+    --rust: #C1502E;
+    --rust-deep: #A5411F;
+    --sage: #6E8B5E;
+    --ink: #2A2521;
+    --ink-soft: #7A6F62;
+    --line: #E3DACB;
+    --radius: 10px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Work Sans', -apple-system, sans-serif;
+    line-height: 1.5;
+  }
+  h1, h2, .serif{ font-family: 'Playfair Display', serif; }
+  .mono{ font-family: 'JetBrains Mono', monospace; }
+
+  header{
+    background: var(--board);
+    color: var(--paper);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky; top: 0; z-index: 20;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  header .brand{ font-family: 'Playfair Display', serif; font-weight: 800; font-size: 21px; color: var(--paper); display:flex; align-items:center; gap:8px; }
+  header .brand .fork{ width: 20px; height: 20px; }
+  header .brand span{ color: var(--gold); }
+  header .who{ font-size: 13px; color: #C9BFAE; display: flex; align-items: center; gap: 14px; }
+  header .who button{ background: transparent; border: 1px solid #4A4238; color: var(--paper); padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  header .who button:hover{ border-color: var(--gold); }
+  header nav{ display: flex; gap: 20px; font-size: 13.5px; }
+  header nav a{ color: #C9BFAE; text-decoration: none; cursor: pointer; padding-bottom: 3px; border-bottom: 2px solid transparent; }
+  header nav a:hover{ color: var(--gold); }
+  header nav a.active{ color: var(--gold); border-bottom-color: var(--gold); }
+
+  main{ max-width: 800px; margin: 0 auto; padding: 0 24px 100px; }
+  main.wide{ max-width: 1080px; }
+
+  h1{ font-size: 30px; font-weight: 800; margin: 0 0 6px; }
+  h2{ font-size: 18px; font-weight: 600; margin: 0 0 14px; }
+  p.lede{ color: var(--ink-soft); margin-top: 0; font-size: 14.5px; }
+
+  button{ font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 14px; border: none; border-radius: 7px; padding: 11px 22px; cursor: pointer; transition: transform .08s, background .15s; }
+  button:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--rust); color: white; }
+  .btn-primary:hover{ background: var(--rust-deep); }
+  .btn-secondary{ background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+  .btn-secondary:hover{ border-color: var(--ink); }
+  .btn-block{ width: 100%; }
+  button:disabled{ opacity: 0.4; cursor: not-allowed; }
+  .link-btn{ background:none; border:none; color: var(--rust); text-decoration: underline; cursor:pointer; padding:0; font-size:13px; font-weight:500; }
+
+  /* Login */
+  .split{ display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 60px); margin: 0 -24px; }
+  @media (max-width: 760px){ .split{ grid-template-columns: 1fr; } .split-visual{ display:none; } }
+  .split-visual{ background: var(--board); color: var(--paper); padding: 56px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+  .chalk-pattern{ position:absolute; inset:0; opacity: 0.05; background-image: radial-gradient(circle, var(--paper) 1.5px, transparent 1.5px); background-size: 24px 24px; }
+  .plate-decor{ position:absolute; right:-60px; top:40%; width:280px; height:280px; border-radius:50%; border: 22px solid rgba(212,162,76,0.08); }
+  .plate-decor.two{ right:40px; top:65%; width:140px; height:140px; border: 14px solid rgba(193,80,46,0.10); }
+  .split-visual .headline{ font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 800; line-height: 1.28; max-width: 380px; position: relative; z-index: 1; }
+  .split-visual .headline em{ color: var(--gold); font-style: italic; }
+  .split-visual .menu-line{ position: relative; z-index: 1; font-size: 13px; color: #9C9184; border-top: 1px dashed #4A4238; padding-top: 14px; margin-top: 20px; }
+  .split-form{ display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+  .form-inner{ width: 100%; max-width: 360px; }
+  label{ display:block; font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-bottom: 6px; }
+  input[type=text], input[type=number], input[type=password]{ width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 7px; background: white; font-size: 15px; font-family: 'Work Sans', sans-serif; margin-bottom: 16px; }
+  input:focus{ outline: none; border-color: var(--rust); }
+  .error{ color: var(--rust); font-size: 13px; margin: -8px 0 14px; background: #FBE7E1; padding: 8px 12px; border-radius: 6px; }
+
+  /* Hero */
+  .hero{
+    background: linear-gradient(135deg, var(--board) 0%, #2E2822 100%);
+    color: white; margin: 0 -24px 28px; padding: 40px 40px 34px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before{ content:""; position:absolute; inset:0; background-image: radial-gradient(circle, rgba(212,162,76,0.08) 1.5px, transparent 1.5px); background-size: 22px 22px; }
+  .hero h1{ position:relative; color: white; margin-bottom: 4px; }
+  .hero p{ position:relative; color: #C9BFAE; margin: 0; font-size: 14.5px; }
+
+  /* Dish illustration (CSS-drawn, no external images) */
+  .dish-art{
+    width: 100%; height: 108px; border-radius: 8px 8px 0 0; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dish-art svg{ width: 62px; height: 62px; opacity: 0.92; }
+  .dish-art .plate-ring{ position:absolute; width:150px; height:150px; border-radius:50%; border: 10px solid rgba(255,255,255,0.14); }
+
+  .rest-card{
+    background: white; border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform .12s, box-shadow .12s;
+  }
+  .rest-card:hover{ transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  .rest-card .rc-body{ padding: 16px 20px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+  .rest-card .name{ font-family:'Playfair Display', serif; font-weight: 700; font-size: 19px; }
+  .rest-card .addr{ font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+  .rest-card .tag{ display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color: var(--gold-deep); background:#FBF1DE; padding:2px 9px; border-radius:20px; margin-top:6px; }
+
+  .rest-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+
+  /* Menu items */
+  .menu-item{ background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; display: flex; align-items:center; gap: 14px; }
+  .menu-item .icon-badge{ width: 46px; height: 46px; border-radius: 50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .menu-item .icon-badge svg{ width: 24px; height: 24px; }
+  .menu-item .info{ flex: 1; }
+  .menu-item .name{ font-weight: 600; font-size: 15px; }
+  .menu-item .price{ font-family: 'JetBrains Mono', monospace; color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .qty-control{ display: flex; align-items: center; gap: 10px; }
+  .qty-control button{ width: 30px; height: 30px; padding: 0; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--line); color: var(--ink); font-size: 16px; line-height:1; }
+  .qty-control button:hover{ border-color: var(--rust); color: var(--rust); }
+  .qty-control .qty-num{ font-family: 'JetBrains Mono', monospace; font-weight: 700; min-width: 18px; text-align: center; }
+
+  .cart-bar{ position: sticky; bottom: 14px; background: var(--board); color: var(--paper); border-radius: var(--radius); padding: 16px 22px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+  .cart-bar .count{ font-size: 13px; color: #B6ABA0; }
+  .cart-bar .amount{ font-family: 'JetBrains Mono', monospace; font-size: 19px; color: var(--gold); font-weight: 700; }
+
+  /* Receipt */
+  .receipt{ background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: 30px 28px; max-width: 400px; margin: 20px auto 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+  .receipt::before{ content:"✓"; position:absolute; top:-16px; left:50%; transform:translateX(-50%); width:34px; height:34px; background: var(--sage); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; border: 3px solid var(--paper); }
+  .receipt .r-head{ text-align: center; margin-bottom: 18px; margin-top: 8px; }
+  .receipt .r-head .rname{ font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; }
+  .receipt .r-head .rid{ font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .receipt .r-line{ display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 5px 0; }
+  .receipt .r-line .qty{ color: var(--ink-soft); }
+  .receipt hr{ border: none; border-top: 1px dashed var(--line); margin: 12px 0; }
+  .receipt .r-total{ display:flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 17px; padding-top: 6px; }
+  .receipt .r-total .lbl{ color: var(--ink-soft); font-weight: 500; font-size: 13px; }
+
+  .empty-state{ text-align:center; padding: 60px 20px; color: var(--ink-soft); }
+  .status-pill{ display:inline-block; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: var(--sage); color: white; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .config-bar{ font-size: 12px; color: var(--ink-soft); text-align: center; padding: 20px; border-top: 1px solid var(--line); margin-top: 40px; }
+  .config-bar input{ width: 240px; display: inline-block; margin: 0 0 0 6px; padding: 4px 8px; font-size: 12px; }
+  .hidden{ display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="fork" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 2v8a2 2 0 002 2 2 2 0 002-2V2M8 12v10M16 2v6a3 3 0 01-3 3v0M16 2v20" stroke="#D4A24C" stroke-width="1.6" stroke-linecap="round"/></svg>
+    Bawarchi <span>Desk</span>
+  </div>
+  <nav id="navBar" class="hidden">
+    <a onclick="loadRestaurants()" id="navRest">Restaurants</a>
+    <a onclick="loadMyOrders()" id="navOrders">My Orders</a>
+  </nav>
+  <div class="who" id="whoBox"></div>
+</header>
+
+<main id="app"></main>
+
+<div class="config-bar">
+  API base: <input type="text" id="apiBaseInput" value="http://127.0.0.1:8000" />
+</div>
+
+<script>
+// ---- CSS-drawn dish icon set (no external images, no copyright risk) ----
+const DISH_PALETTES = [
+  { bg: 'linear-gradient(135deg,#C1502E,#8F3A20)', icon: 'bowl' },
+  { bg: 'linear-gradient(135deg,#D4A24C,#B8842E)', icon: 'plate' },
+  { bg: 'linear-gradient(135deg,#6E8B5E,#4F6844)', icon: 'leaf' },
+  { bg: 'linear-gradient(135deg,#8B5E3C,#5E3F28)', icon: 'cup' },
+  { bg: 'linear-gradient(135deg,#B84A5C,#8C3646)', icon: 'skewer' },
+];
+const ICONS = {
+  bowl: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M3 12h18a9 9 0 01-18 0z"/><path d="M12 3v3M8 4l1 2M16 4l-1 2" stroke-linecap="round"/></svg>',
+  plate: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
+  leaf: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14z"/><path d="M5 19c2-4 5-7 9-9" stroke-linecap="round"/></svg>',
+  cup: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M5 8h11v6a5.5 5.5 0 01-11 0V8z"/><path d="M16 10h1.5a2.5 2.5 0 010 5H16" /><path d="M8 3v2M11 3v2M14 3v2" stroke-linecap="round"/></svg>',
+  skewer: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M3 21L21 3" stroke-linecap="round"/><circle cx="8" cy="16" r="2.2"/><circle cx="13" cy="11" r="2.2"/><circle cx="18" cy="6" r="2.2"/></svg>',
+};
+function paletteFor(seed) {
+  let hash = 0;
+  for (let i = 0; i < (seed || '').length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  return DISH_PALETTES[Math.abs(hash) % DISH_PALETTES.length];
+}
+
+const state = {
+  apiBase: document.getElementById('apiBaseInput').value,
+  access: null, refresh: null, username: null,
+  restaurants: [], menuItems: [], currentRestaurant: null, cart: {},
+};
+
+document.getElementById('apiBaseInput').addEventListener('change', (e) => {
+  state.apiBase = e.target.value.replace(/\/$/, '');
+});
+
+const app = document.getElementById('app');
+const whoBox = document.getElementById('whoBox');
+const navBar = document.getElementById('navBar');
+
+function api(path, opts = {}) {
+  const headers = opts.headers || {};
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  if (state.access) headers['Authorization'] = 'Bearer ' + state.access;
+  return fetch(state.apiBase + path, { ...opts, headers }).then(async (res) => {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+    return data;
+  });
+}
+
+function renderWho() {
+  if (state.username) {
+    whoBox.innerHTML = `<span>Signed in as <strong style="color:white;">${state.username}</strong></span><button onclick="logout()">Log out</button>`;
+    navBar.classList.remove('hidden');
+  } else {
+    whoBox.innerHTML = '';
+    navBar.classList.add('hidden');
+  }
+}
+function setActiveNav(id) {
+  document.getElementById('navRest').classList.toggle('active', id === 'navRest');
+  document.getElementById('navOrders').classList.toggle('active', id === 'navOrders');
+}
+function logout() {
+  state.access = null; state.refresh = null; state.username = null;
+  state.cart = {}; state.currentRestaurant = null;
+  renderWho(); renderLogin();
+}
+
+function renderLogin() {
+  document.querySelector('main').className = '';
+  app.innerHTML = `
+    <div class="split">
+      <div class="split-visual">
+        <div class="chalk-pattern"></div>
+        <div class="plate-decor"></div>
+        <div class="plate-decor two"></div>
+        <div class="headline">Tonight's special:<br/><em>your own order desk.</em></div>
+        <div class="menu-line">Restaurants · Menus · Live order totals — all from one console.</div>
+      </div>
+      <div class="split-form">
+        <div class="form-inner">
+          <h1>Sign in</h1>
+          <p class="lede">Staff and customer accounts are created via Django admin.</p>
+          <label for="loginUser">Username</label>
+          <input type="text" id="loginUser" />
+          <label for="loginPass">Password</label>
+          <input type="password" id="loginPass" />
+          <div class="error hidden" id="loginError"></div>
+          <button class="btn-primary btn-block" onclick="doLogin()">Log in</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errBox = document.getElementById('loginError');
+  errBox.classList.add('hidden');
+  try {
+    const data = await api('/api/token/', { method: 'POST', body: JSON.stringify({ username, password }) });
+    state.access = data.access; state.refresh = data.refresh; state.username = username;
+    renderWho();
+    await loadRestaurants();
+  } catch (e) {
+    errBox.textContent = 'Could not sign in — check your username and password.';
+    errBox.classList.remove('hidden');
+  }
+}
+
+async function loadRestaurants() {
+  setActiveNav('navRest');
+  document.querySelector('main').className = 'wide';
+  app.innerHTML = `<div class="hero"><h1>Restaurants</h1><p>Loading the board…</p></div>`;
+  try {
+    const data = await api('/api/restaurants/');
+    state.restaurants = data.results || data;
+    renderRestaurants();
+  } catch (e) {
+    app.innerHTML = `<div class="hero"><h1>Restaurants</h1></div><div class="error">${e.message}</div>`;
+  }
+}
+
+function renderRestaurants() {
+  const hero = `<div class="hero"><h1>Restaurants</h1><p>Pick a place to start an order.</p></div>`;
+  if (state.restaurants.length === 0) {
+    app.innerHTML = `${hero}<div class="empty-state"><p>No restaurants yet. Add one in Django admin, then refresh.</p><button class="btn-secondary" onclick="loadRestaurants()">Refresh</button></div>`;
+    return;
+  }
+  const cards = state.restaurants.map(r => {
+    const pal = paletteFor(r.name);
+    return `
+    <div class="rest-card">
+      <div class="dish-art" style="background:${pal.bg}">
+        <div class="plate-ring"></div>
+        ${ICONS[pal.icon]}
+      </div>
+      <div class="rc-body">
+        <div>
+          <div class="tag">Now serving</div>
+          <div class="name">${r.name}</div>
+          <div class="addr">${r.address || ''}</div>
+        </div>
+        <button class="btn-primary" onclick="openRestaurant(${r.id})">View menu</button>
+      </div>
+    </div>`;
+  }).join('');
+  app.innerHTML = `${hero}<div class="rest-grid">${cards}</div>`;
+}
+
+async function openRestaurant(id) {
+  document.querySelector('main').className = 'wide';
+  app.innerHTML = `<div class="hero"><h1>Loading menu…</h1></div>`;
+  try {
+    const restaurant = state.restaurants.find(r => r.id === id);
+    const data = await api('/api/menu-items/');
+    const allItems = data.results || data;
+    state.menuItems = allItems.filter(m => m.restaurant === id);
+    state.currentRestaurant = restaurant;
+    state.cart = {};
+    renderMenu();
+  } catch (e) {
+    app.innerHTML = `<div class="hero"><h1>Could not load menu</h1></div><div class="error">${e.message}</div><button class="btn-secondary" onclick="loadRestaurants()">Back</button>`;
+  }
+}
+
+function cartCount() { return Object.values(state.cart).reduce((a, b) => a + b, 0); }
+function cartTotal() { return state.menuItems.reduce((sum, m) => sum + (state.cart[m.id] || 0) * parseFloat(m.price), 0); }
+function changeQty(itemId, delta) {
+  const current = state.cart[itemId] || 0;
+  const next = Math.max(0, current + delta);
+  if (next === 0) delete state.cart[itemId]; else state.cart[itemId] = next;
+  renderMenu();
+}
+
+function renderMenu() {
+  const r = state.currentRestaurant;
+  const itemsHtml = state.menuItems.map(m => {
+    const pal = paletteFor(m.name);
+    return `
+    <div class="menu-item">
+      <div class="icon-badge" style="background:${pal.bg}">${ICONS[pal.icon]}</div>
+      <div class="info">
+        <div class="name">${m.name}</div>
+        <div class="price mono">₹${parseFloat(m.price).toFixed(2)}</div>
+      </div>
+      <div class="qty-control">
+        <button onclick="changeQty(${m.id}, -1)">−</button>
+        <span class="qty-num">${state.cart[m.id] || 0}</span>
+        <button onclick="changeQty(${m.id}, 1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const count = cartCount();
+  app.innerHTML = `
+    <div class="hero">
+      <button class="link-btn" onclick="loadRestaurants()" style="color:var(--gold); margin-bottom:14px; display:inline-block;">&larr; Back to restaurants</button>
+      <h1>${r.name}</h1>
+      <p>${r.address || ''}</p>
+    </div>
+    <div style="max-width:640px; margin:0 auto;">
+      ${itemsHtml || '<p class="lede">No menu items yet for this restaurant.</p>'}
+    </div>
+    <div class="cart-bar" style="max-width:640px; margin-left:auto; margin-right:auto;">
+      <div class="count">${count} item${count === 1 ? '' : 's'} in order</div>
+      <div style="display:flex; align-items:center; gap:18px;">
+        <div class="amount">₹${cartTotal().toFixed(2)}</div>
+        <button class="btn-primary" ${count === 0 ? 'disabled' : ''} onclick="placeOrder()">Place order</button>
+      </div>
+    </div>
+  `;
+}
+
+async function placeOrder() {
+  app.innerHTML = `<div class="hero"><h1>Placing your order…</h1></div>`;
+  try {
+    const order = await api('/api/orders/', { method: 'POST', body: JSON.stringify({ restaurant: state.currentRestaurant.id }) });
+    const cartSnapshot = state.menuItems
+      .filter(m => state.cart[m.id])
+      .map(m => ({ name: m.name, quantity: state.cart[m.id], price: m.price }));
+    for (const [menuItemId, quantity] of Object.entries(state.cart)) {
+      await api('/api/order-items/', { method: 'POST', body: JSON.stringify({ order: order.id, menu_item: parseInt(menuItemId), quantity }) });
+    }
+    const finalOrder = await api(`/api/orders/${order.id}/`);
+    state.cart = {};
+    renderReceipt(finalOrder, cartSnapshot);
+  } catch (e) {
+    app.innerHTML = `<div class="hero"><h1>Could not place order</h1></div><div class="error">${e.message}</div><button class="btn-secondary" onclick="loadRestaurants()">Back to restaurants</button>`;
+  }
+}
+
+function renderReceipt(order, cartSnapshot) {
+  document.querySelector('main').className = '';
+  const r = state.currentRestaurant;
+  const lineItems = (order.items && order.items.length) ? order.items.map(it => `
+      <div class="r-line"><span>${it.menu_item_name || ('Item #' + it.menu_item)} <span class="qty">×${it.quantity}</span></span><span>₹${(parseFloat(it.price || 0) * it.quantity).toFixed(2)}</span></div>
+    `).join('') : cartSnapshot.map(it => `
+      <div class="r-line"><span>${it.name} <span class="qty">×${it.quantity}</span></span><span>₹${(parseFloat(it.price) * it.quantity).toFixed(2)}</span></div>
+    `).join('');
+
+  app.innerHTML = `
+    <div style="text-align:center; padding-top: 26px;"><span class="status-pill">Order placed</span></div>
+    <div class="receipt">
+      <div class="r-head">
+        <div class="rname">${r ? r.name : 'Order'}</div>
+        <div class="rid mono">ORDER #${order.id}</div>
+      </div>
+      <hr/>
+      ${lineItems || '<div class="r-line"><span class="qty">Items saved to this order.</span></div>'}
+      <hr/>
+      <div class="r-total"><span class="lbl">TOTAL</span><span>₹${parseFloat(order.total).toFixed(2)}</span></div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn-primary" onclick="loadRestaurants()">Order from another restaurant</button>
+    </div>
+  `;
+}
+
+async function loadMyOrders() {
+  setActiveNav('navOrders');
+  document.querySelector('main').className = '';
+  app.innerHTML = `<div class="hero"><h1>My Orders</h1><p>Loading…</p></div>`;
+  try {
+    const data = await api('/api/orders/');
+    renderMyOrders(data.results || data);
+  } catch (e) {
+    app.innerHTML = `<div class="hero"><h1>My Orders</h1></div><div class="error">${e.message}</div>`;
+  }
+}
+
+function renderMyOrders(orders) {
+  const hero = `<div class="hero"><h1>My Orders</h1><p>Every order tied to your account only.</p></div>`;
+  if (orders.length === 0) {
+    app.innerHTML = `${hero}<div class="empty-state"><p>No orders yet — go place one.</p><button class="btn-primary" onclick="loadRestaurants()">Browse restaurants</button></div>`;
+    return;
+  }
+  const rows = orders.map(o => {
+    const pal = paletteFor('order' + o.id);
+    return `
+    <div class="rest-card"><div class="rc-body" style="padding:18px 20px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="icon-badge" style="background:${pal.bg}; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">${ICONS[pal.icon]}</div>
+        <div>
+          <div class="name mono" style="font-size:15px;">ORDER #${o.id}</div>
+          <div class="addr">Restaurant ${o.restaurant}</div>
+        </div>
+      </div>
+      <div class="amount serif" style="color:var(--rust); font-size:20px; font-weight:700;">₹${parseFloat(o.total).toFixed(2)}</div>
+    </div></div>`;
+  }).join('');
+  app.innerHTML = `${hero}${rows}`;
+}
+
+renderLogin();
+</script>
+
+</body>
+</html>
